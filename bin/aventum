@@ -1,0 +1,123 @@
+#!/usr/bin/env node
+
+// Config
+global.serverConfig = null
+global.dashboardFolderName = 'dashboard'
+global.serverFolderName = 'server'
+global.dockerComposeRepo = 'https://github.com/TryAventum/compose.git'
+global.dashboardRepo = 'https://github.com/TryAventum/dashboard.git'
+global.serverRepo = 'https://github.com/TryAventum/server.git'
+
+const fs = require('fs')
+const path = require('path')
+const join = path.join
+const program = require('commander')
+const inquirer = require('inquirer')
+
+const {
+  generateAndSaveServerConfig,
+  prepareAndBuild,
+  printDashboardEnvNote,
+} = require('../lib/helpers')
+
+const chalk = require('chalk')
+const createDockerSetup = require('../lib/actions/docker')
+const runServers = require('../lib/actions/runServers')
+const createAndRun = require('../lib/actions/createAndRun')
+
+function isServerConfigExist() {
+  if (
+    fs.existsSync(
+      join(process.cwd(), serverFolderName + '/.env.production.local')
+    )
+  ) {
+    return true
+  }
+
+  return false
+}
+
+program
+  .version('1.0.0')
+  .description('CLI app to help you in your journey with Aventum!')
+
+program
+  .command('server-configurations')
+  .alias('sc')
+  .option('-b, --build', 'build Aventum dashboard')
+  .description('reset/regenerate Aventum server configurations')
+  .action(async (cmdObj) => {
+    try {
+      if (isServerConfigExist()) {
+        var askForPermission = [
+          {
+            type: 'confirm',
+            name: 'askForOverwrite',
+            message:
+              'The configurations file already exist! do you want to overwrite it (just hit enter for YES)?',
+            default: true,
+          },
+        ]
+
+        var answers = await inquirer.prompt(askForPermission)
+        if (answers.askForOverwrite) {
+          await generateAndSaveServerConfig()
+          if (cmdObj.build) {
+            await prepareAndBuild()
+          } else {
+            printDashboardEnvNote()
+          }
+        }
+      } else {
+        await generateAndSaveServerConfig()
+        if (cmdObj.build) {
+          await prepareAndBuild()
+        } else {
+          printDashboardEnvNote()
+        }
+      }
+    } catch (error) {
+      console.log(chalk.red(error))
+    }
+  })
+
+program
+  .command('create')
+  .alias('c')
+  .option('-dp, --dashboard-port <port>', 'Aventum dashboard port')
+  .option('-d, --docker', 'create Aventum app using Docker Compose template')
+  .option('-r, --run', 'run the app')
+  .description('create Aventum app')
+  .action((cmdObj) => {
+    if (cmdObj.docker) {
+      createDockerSetup(cmdObj)
+    } else {
+      createAndRun(cmdObj)
+    }
+  })
+
+program
+  .command('run')
+  .alias('r')
+  .option('-dp, --dashboard-port <port>', 'Aventum dashboard port')
+  .description('run Aventum app')
+  .action(async (cmdObj) => {
+    try {
+      runServers({
+        cwd: join(process.cwd(), serverFolderName),
+        cmdObj,
+      })
+    } catch (error) {
+      console.log(chalk.red(error))
+    }
+  })
+
+program.parse(process.argv)
+
+// function makeRed (txt) {
+//   return chalk.red(txt)
+// }
+
+// if (!process.argv.slice(2).length) {
+//   program.outputHelp(makeRed)
+// }
