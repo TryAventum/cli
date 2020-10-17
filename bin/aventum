@@ -38,7 +38,7 @@ function isServerConfigExist() {
 }
 
 program
-  .version('1.0.0')
+  .version('1.0.1')
   .description('CLI app to help you in your journey with Aventum!')
 
 program

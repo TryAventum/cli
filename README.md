@@ -1,6 +1,6 @@
 # Aventum CLI
 
-CLI app to help you in your journey with Aventum!
+CLI app to help you in your journey with [Aventum](https://aventum.org)!
 
 ## Table of Contents
 

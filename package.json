@@ -1,6 +1,6 @@
 {
   "name": "@aventum/cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Helps you get up and running easily with Aventum!",
   "bin": {
     "aventum": "./bin/aventum"
